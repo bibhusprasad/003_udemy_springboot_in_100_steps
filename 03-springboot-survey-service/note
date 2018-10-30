@@ -1,0 +1,397 @@
+Add a question to a servey
+----------------------
+POST	http://localhost:8080/surveys/Survey1/questions
+Header
+[{"key":"Content-Type","value":"application/json","description":"","type":"text","enabled":true}]
+
+{
+    "description": "Most Popular Party in India",
+    "correctAnswer": "BJP",
+    "options": [
+        "BJP",
+        "Congress",
+        "BJD",
+        "TMC"
+    ]
+}
+
+Content Navigation Deliver XML response
+--------------------------------------
+
+Add below entry in pom.xml
+<!-- Content Navigation Deliver XML Response -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-xml</artifactId>
+		</dependency>
+		
+http://localhost:8080/surveys/
+Header
+Accept	application/xml
+
+
+Monitor Application Using Acutator and Hal browser
+------------------------------------------------
+
+<!-- Monitor Application using actuator and hal browser -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-rest-hal-browser</artifactId>
+		</dependency>
+		
+By default it will expose only to service
+Mapped "{[/actuator/health],methods=[GET],produces=[application/vnd.spring-boot.actuator.v2+json || application/json]}"
+Mapped "{[/actuator/info],methods=[GET],produces=[application/vnd.spring-boot.actuator.v2+json || application/json]}"
+
+if u want to expose all other service we need to add a entry in application.properties file
+
+management.endpoints.web.exposure.include=*
+(OR) management.endpoints.web.exposure.include=health,info,beans,env
+
+http://localhost:8080/
+
+Change defaylt embeded tomcat server to jetty / undertow
+---------------------------------------------------------
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter-tomcat</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		
+		<!-- Enable Jetty server -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-jetty</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+Read Value from property file
+-------------------------------
+welcome.message=Hi ! Welcome message from property file.
+
+@Value("${welcome.message}")
+private String message;
+
+(or)
+Add this in run -> run configuration -> arguments -> program
+--welcome.message="welcome message from program argument"
+Program Argument has more priority than property file
+
+Different Enviroment Setup for properties File
+--------------------------------------------
+Add below line in application.properties file
+spring.profiles.active=dev
+
+create application-dev.properties file in class path. data will pick from dev properties file.
+
+(OR)
+Add below line in run -> run configuration -> argument -> VM argument
+-Dspring.profiles.active=dev
+
+create application-dev.properties file in class path. data will pick from dev properties file.
+
+Application.java
+	@Profile("dev")
+	@Bean
+	public String dummyMessageForDev() {
+		return "This bean will create when active profile is dev";
+	}
+
+	@Profile("prod")
+	@Bean
+	public String dummyMessageForProd() {
+		return "This bean will create when active profile is prod";
+	}
+
+TypeSafe Configuration properties
+------------------------------------------------
+@Component
+@ConfigurationProperties("basic")
+public class BasicConfiguration {
+	private boolean value;
+	private String message;
+	private int number;
+
+In properties file
+basic.value=true
+basic.message=Hello Bibhu
+basic.number=99
+
+Swagger Implemenation
+-----------------------------------
+
+<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger2</artifactId>
+			<version>2.9.2</version>
+		</dependency>
+		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger-ui</artifactId>
+			<version>2.9.2</version>
+		</dependency>
+		
+
+@Configuration
+@EnableSwagger2
+public class SwaggerConfig {
+	
+	private static final Contact DEFAULT_CONTACT = new Contact("Bibhu Samla", "http://udemy.com", "bibhusprasad@gmail.com");
+	@SuppressWarnings("rawtypes")
+	private static final ApiInfo DEFAULT_API_INFO = new ApiInfo("Api Documentation", "Awasome Api Documentation", "1.0", "urn:tos",
+	          DEFAULT_CONTACT, "Apache 2.0", "http://www.apache.org/licenses/LICENSE-2.0", new ArrayList<VendorExtension>());
+	private static final Set<String> DEFAULT_PRODUCE_AND_CONSUME = new HashSet<String>(Arrays.asList("application/json", "application/xml"));
+
+	@Bean
+	public Docket api() {
+		return new Docket(DocumentationType.SWAGGER_2)
+				.apiInfo(DEFAULT_API_INFO)
+				.consumes(DEFAULT_PRODUCE_AND_CONSUME)
+				.produces(DEFAULT_PRODUCE_AND_CONSUME);
+	}
+}
+
+http://localhost:8080/v2/api-docs
+http://localhost:8080/swagger-ui.html
+
+hateoas Implementation
+--------------------------------------
+	<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-hateoas</artifactId>
+		</dependency>
+		
+		
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+@GetMapping("/users/{id}")
+	public Resource<User> findAUser(@PathVariable int id) {
+		User user = userService.findOneUserService(id);
+		Resource<User> resource = new Resource<User>(user);
+		ControllerLinkBuilder linkTo = linkTo(methodOn(this.getClass()).getAllUserDetails());
+		resource.add(linkTo.withRel("all-users"));
+		return resource;
+	}
+	
+Exception Handler
+-----------------------------------
+
+	@GetMapping(path="/movie/{id}")
+	public String getMovieById1(@PathVariable String id) throws Exception {
+		int mId = Integer.valueOf(id);
+		if(0 == mId) {
+			throw new NullPointerException("NPE");
+		}
+		if(1 == mId) {
+			throw new EnhancedException("EE");
+		}
+		if(2 == mId) {
+			throw new Exception("Id is 1");
+		}
+		return "Hello";
+	}
+	
+	@ResponseStatus(HttpStatus.NOT_FOUND)
+public class EnhancedException extends Exception{
+
+	private static final long serialVersionUID = 1L;
+
+	public EnhancedException(String message) {
+		super(message);
+	}
+}
+
+
+public class UserExceptionResponse {
+	
+	private Date timeStamp;
+	private String message;
+	private String details;
+
+@ControllerAdvice
+public class CustomizedResponseEntityExceptionHandler {
+
+	@ExceptionHandler
+	public ResponseEntity<UserExceptionResponse> movieNotFound(NullPointerException ex) {
+		UserExceptionResponse userExceptionResponse = new UserExceptionResponse();
+		userExceptionResponse.setTimeStamp(new Date());
+		userExceptionResponse.setMessage(ex.getMessage());
+		userExceptionResponse.setDetails("Movie Id should not 0");
+		return new ResponseEntity<UserExceptionResponse>(userExceptionResponse, HttpStatus.BAD_REQUEST);
+	}
+	
+	@ExceptionHandler
+	public ResponseEntity<UserExceptionResponse> movieNotFoundWithOne(EnhancedException ex) {
+		UserExceptionResponse userExceptionResponse = new UserExceptionResponse();
+		userExceptionResponse.setTimeStamp(new Date());
+		userExceptionResponse.setMessage(ex.getMessage());
+		userExceptionResponse.setDetails("Movie Id should not 1");
+		return new ResponseEntity<UserExceptionResponse>(userExceptionResponse, HttpStatus.BAD_REQUEST);
+	}
+
+
+==================
+JPA
+==================
+add below in pom.xml
+<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		
+create User Entity class
+@Entity
+public class User {Role role}
+
+public interface UserRepository extends CrudRepository<User, Long>{
+	List<User> findByRole(String string);
+}
+
+//commandline runner class execute during erver start up time
+//this class store all the data to the data base
+@Component
+public class UserCommandLineRunner implements CommandLineRunner{
+	@Autowired
+	private UserRepository repository;
+	@Override
+	public void run(String... args) throws Exception {
+		repository.save(new User("Alok", "Admin"));
+		repository.save(new User("Asutosh", "User"));
+		repository.save(new User("Sonali", "Admin"));
+		repository.save(new User("Babul", "User"));
+		for (User user : repository.findAll()) {
+			log.info(user.toString());
+		}
+		log.info("Admin users are.....");
+		for (User user : repository.findByRole("Admin")) {
+			log.info(user.toString());
+		}
+	}
+}
+
+h2-console
+-------------------
+To see data in h2 data base
+http://localhost:8080/h2-console
+
+Driver Class : org.h2.Driver
+JDBC url : jdbc:h2:mem:testdb
+User Name : sa
+Password : 
+
+Spring Data Rest
+-------------------------
+Expose our rest service 
+
+@RepositoryRestResource(path="/users", collectionResourceRel="users")
+public interface UserRestRepository extends PagingAndSortingRepository<User, Long> {
+	List<User> findByRole(@Param("role") String string);
+}
+PagingAndSortingRepository is sub class of CurdRepository. 
+It provide more functionalities like sort, pagination etc
+here we can get all the users details as well as we can insert a user
+
+http://localhost:8080/users
+http://localhost:8080/users?size=3
+http://localhost:8080/users?page=1&size=2
+http://localhost:8080/users/search/findByRole?role=Admin
+
+Add Spring Security
+-------------------------------
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		
+Add this in pom.xml file
+
+Basic Oath
+------------------
+u will get unauthorize exception when u start to invoke a service
+In postman Authentication type is BAsic Auth
+user name is user
+password will appear durinf server start up time.copy from console
+
+
+User and Role Authentication
+-------------------------------
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+
+@Configuration
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+	
+	// Authentication : User --> Roles
+	@Override
+	/*protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+		auth.inMemoryAuthentication().passwordEncoder(NoOpPasswordEncoder.getInstance())  
+        .withUser("bibhu")
+         .password("ipsita")
+         .roles("user","admin")
+         .and()
+         .withUser("alok")
+         .password("alok")
+         .roles("user");
+	}*/
+	
+	@Bean
+	public UserDetailsService userDetailsService() {
+
+	    PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+
+	    final User.UserBuilder userBuilder = User.builder().passwordEncoder(encoder::encode);
+	    UserDetails user = userBuilder
+	            .username("alok")
+	            .password("alok")
+	            .roles("user")
+	            .build();
+
+	    UserDetails admin = userBuilder
+	            .username("bibhu")
+	            .password("ipsita")
+	            .roles("user","admin")
+	            .build();
+
+	    return new InMemoryUserDetailsManager(user, admin);
+	}
+	
+	// Authorization : Role -> Access
+	// survey -> USER
+	protected void configure(HttpSecurity http) throws Exception {
+		http.httpBasic().and().authorizeRequests().antMatchers("/surveys/**")
+				.hasRole("user").antMatchers("/users/**").hasRole("user")
+				.antMatchers("/**").hasRole("admin").and().csrf().disable()
+				.headers().frameOptions().disable();
+	}
+
+}
+
+
+
+
+
+
