@@ -1,9 +1,15 @@
-Command Line Runner
---------------------------
-It run your application like controller.
+package com.springboot100steps;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+
+import com.springboot100steps.entity.User;
+import com.springboot100steps.service.UserDAOService;
 
 @Component
 public class UserDAOServiceCommandLineRunner implements CommandLineRunner{
+
 	@Autowired
 	UserDAOService userDAOService;
 	
@@ -13,11 +19,5 @@ public class UserDAOServiceCommandLineRunner implements CommandLineRunner{
 		long id = userDAOService.insert(user);
 		System.out.println(id + " inserted.");
 	}
+
 }
-
-h2-database console
------------------------
-http://localhost:8080/h2-console/
-
-Driver Class = org.h2.Driver
-JDBC Url = jdbc:h2:mem:testdb

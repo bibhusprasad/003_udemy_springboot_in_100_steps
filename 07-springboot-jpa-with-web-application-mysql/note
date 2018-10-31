@@ -1,0 +1,45 @@
+Command Line Runner
+--------------------------
+It run your application like controller.
+
+@Component
+public class UserDAOServiceCommandLineRunner implements CommandLineRunner{
+	@Autowired
+	UserDAOService userDAOService;
+	
+	@Override
+	public void run(String... args) throws Exception {
+		User user = new User("bibhu", "admin");
+		long id = userDAOService.insert(user);
+		System.out.println(id + " inserted.");
+	}
+}
+
+h2-database console
+-----------------------
+http://localhost:8080/h2-console/
+
+Driver Class = org.h2.Driver
+JDBC Url = jdbc:h2:mem:testdb
+
+connect to my sql data base
+------------------------------
+1st create table in sql
+create table todo
+(id integer not null, 
+name varchar(30), 
+description varchar(30), 
+targetDate timestamp, 
+done boolean, 
+primary key(id));
+
+spring.jpa.show-sql=true
+spring.h2.console.enabled=true
+
+spring.datasource.driverClassName=com.mysql.jdbc.Driver
+spring.datasource.url=jdbc:mysql://localhost:3306/todouser?useSSL=false
+spring.datasource.username=root
+spring.datasource.password=ipsita
+
+spring.jpa.hibernate.ddl-auto=create
+spring.jpa.database-platform=org.hibernate.dialect.MySQL5Dialect
