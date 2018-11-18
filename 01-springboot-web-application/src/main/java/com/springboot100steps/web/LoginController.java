@@ -22,7 +22,7 @@ public class LoginController {
 		return "login-view-page";
 	}
 	
-	@RequestMapping(value="/login", method=RequestMethod.POST)
+	@RequestMapping(value="/", method=RequestMethod.POST)
 	public String showWelcomePage(@RequestParam String name, @RequestParam String password, ModelMap model) {
 		if(!loginService.validateCredentials(name, password)) {
 			model.put("errorMessage", "Invalid Credential.");
